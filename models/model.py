@@ -19,7 +19,7 @@ from utils.layers import PrimaryCaps, FCCaps, Length
 from utils.tools import get_callbacks, marginLoss, multiAccuracy
 from utils.dataset import Dataset
 from utils import pre_process_multimnist
-from models import efficient_capsnet_graph_mnist, efficient_capsnet_graph_smallnorb, efficient_capsnet_graph_multimnist, original_capsnet_graph_mnist
+from models import efficient_capsnet_graph_mnist, efficient_capsnet_graph_smallnorb, efficient_capsnet_graph_multimnist, original_capsnet_graph_mnist, efficient_capsnet_graph_8p361
 import os
 import json
 from tqdm.notebook import tqdm
@@ -154,6 +154,8 @@ class EfficientCapsNet(Model):
             self.model = efficient_capsnet_graph_smallnorb.build_graph(self.config['SMALLNORB_INPUT_SHAPE'], self.mode, self.verbose)
         elif self.model_name == 'MULTIMNIST':
             self.model = efficient_capsnet_graph_multimnist.build_graph(self.config['MULTIMNIST_INPUT_SHAPE'], self.mode, self.verbose)
+        elif self.model_name == '8P361':
+            self.model = efficient_capsnet_graph_8p361.build_graph(self.config['8P361_INPUT_SHAPE'], self.mode, self.verbose)
             
     def train(self, dataset=None, initial_epoch=0):
         callbacks = get_callbacks(self.tb_path, self.model_path_new_train, self.config['lr_dec'], self.config['lr'])
@@ -168,6 +170,13 @@ class EfficientCapsNet(Model):
               loss_weights=[1., self.config['lmd_gen']/2,self.config['lmd_gen']/2],
               metrics={'Efficient_CapsNet': multiAccuracy})
             steps = 10*int(dataset.y_train.shape[0] / self.config['batch_size'])
+        elif self.model_name == '8P361':
+            self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.config['lr']),
+              loss=[marginLoss, 'mse'],
+              loss_weights=[1., self.config['lmd_gen']],
+              metrics={'Efficient_CapsNet': 'accuracy'})
+            steps = None
+            
         else:
             self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.config['lr']),
               loss=[marginLoss, 'mse'],
@@ -179,7 +188,7 @@ class EfficientCapsNet(Model):
 
         history = self.model.fit(dataset_train,
           epochs=self.config[f'epochs'], steps_per_epoch=steps,
-          validation_data=(dataset_val), batch_size=self.config['batch_size'], initial_epoch=initial_epoch,
+          validation_data=dataset_val, batch_size=self.config['batch_size'], initial_epoch=initial_epoch,
           callbacks=callbacks)
         
         return history
