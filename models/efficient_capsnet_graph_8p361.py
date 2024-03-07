@@ -42,7 +42,7 @@ def efficient_capsnet_graph(input_shape):
     x = tf.keras.layers.Conv2D(128,3,2, activation=None, padding='valid', kernel_initializer='he_normal')(x)   
     x = tf.keras.layers.LeakyReLU()(x)
     x = tf.keras.layers.BatchNormalization()(x)
-    x = PrimaryCaps(128, 20, 16, 8)(x)
+    x = PrimaryCaps(128, 20, 16, 8, 1)(x)
     
     digit_caps = FCCaps(2,16)(x)
     

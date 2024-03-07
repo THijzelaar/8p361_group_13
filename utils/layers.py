@@ -124,6 +124,10 @@ class PrimaryCaps(tf.keras.layers.Layer):
                                              activation='linear', groups=self.F, padding='valid')
 
         self.built = True
+
+    def get_config(self):
+        base_config = super().get_config()
+        return {**base_config}
     
     def call(self, inputs):      
         x = self.DW_Conv2D(inputs)      
