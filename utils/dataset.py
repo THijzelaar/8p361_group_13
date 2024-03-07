@@ -15,12 +15,13 @@
 
 import numpy as np
 import tensorflow as tf
-import tensorflow_datasets as tfds
+#import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 import os
 from utils import pre_process_mnist, pre_process_multimnist, pre_process_smallnorb
 import json
-
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import tensorflow_io as tfio
 
 class Dataset(object):
     """
@@ -44,7 +45,7 @@ class Dataset(object):
     get_tf_data():
         get a tf.data.Dataset object of the loaded dataset. 
     """
-    def __init__(self, model_name, config_path='config.json'):
+    def __init__(self, model_name, image_size=96, config_path='config.json'):
         self.model_name = model_name
         self.config_path = config_path
         self.config = None
@@ -56,6 +57,7 @@ class Dataset(object):
         self.X_test_patch = None
         self.load_config()
         self.get_dataset()
+        self.image_size = image_size
         
 
     def load_config(self):
@@ -102,6 +104,47 @@ class Dataset(object):
             self.class_names = list(range(10))
             print("[INFO] Dataset loaded!")
 
+        
+    def get_pcam_generators(self, base_dir, train_batch_size=32, val_batch_size=32):
+
+        # dataset parameters
+        train_path = os.path.join(base_dir, 'train+val', 'train')
+        valid_path = os.path.join(base_dir, 'train+val', 'valid')
+
+
+        RESCALING_FACTOR = 1./255
+
+        # instantiate data generators
+        def generator(image, label):
+            return (image, label), (label, image)
+        
+    
+
+        train_gen = tf.keras.utils.image_dataset_from_directory(train_path,
+                                                image_size=(self.image_size, self.image_size),
+                                                batch_size=train_batch_size,
+                                                label_mode='categorical')
+
+        val_gen = tf.keras.utils.image_dataset_from_directory(valid_path,
+                                                image_size=(self.image_size, self.image_size),
+                                                batch_size=val_batch_size,
+                                                label_mode='categorical')
+        
+        
+        
+        train_gen = train_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
+        
+        train_gen = train_gen.map(generator)
+        
+        
+        val_gen = val_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
+        val_gen = val_gen.map(generator)
+
+        train_gen = train_gen.prefetch(-1)
+        val_gen = val_gen.prefetch(-1)
+        
+
+        return train_gen, val_gen
 
     def get_tf_data(self):
         if self.model_name == 'MNIST':
@@ -110,5 +153,6 @@ class Dataset(object):
             dataset_train, dataset_test = pre_process_smallnorb.generate_tf_data(self.X_train, self.y_train, self.X_test_patch, self.y_test, self.config['batch_size'])
         elif self.model_name == 'MULTIMNIST':
             dataset_train, dataset_test = pre_process_multimnist.generate_tf_data(self.X_train, self.y_train, self.X_test, self.y_test, self.config['batch_size'], self.config["shift_multimnist"])
-
+        elif self.model_name == '8P361':
+            dataset_train, dataset_test = self.get_pcam_generators(self.config['pcam_path'], self.config['batch_size'], self.config['batch_size'])
         return dataset_train, dataset_test
