@@ -95,7 +95,7 @@ def build_graph(input_shape, mode, verbose):
     digit_caps, digit_caps_len = efficient_capsnet(inputs)
     noised_digitcaps = tf.keras.layers.Add()([digit_caps, noise]) # only if mode is play
     
-    masked_by_y = Mask()(digit_caps)  
+    masked_by_y = Mask()([digit_caps, y_true])  
     masked = Mask()(digit_caps)
     masked_noised_y = Mask()(noised_digitcaps)
     

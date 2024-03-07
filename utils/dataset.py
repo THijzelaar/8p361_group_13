@@ -144,7 +144,6 @@ class Dataset(object):
         val_gen = val_gen.prefetch(-1)
         
 
-
         return train_gen, val_gen
 
     def get_tf_data(self):
