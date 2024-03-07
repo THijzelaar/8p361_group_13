@@ -21,7 +21,7 @@ import os
 from utils import pre_process_mnist, pre_process_multimnist, pre_process_smallnorb
 import json
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-import tensorflow_io as tfio
+
 
 class Dataset(object):
     """
