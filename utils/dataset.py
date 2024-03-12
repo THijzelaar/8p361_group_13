@@ -104,8 +104,9 @@ class Dataset(object):
             self.class_names = list(range(10))
             print("[INFO] Dataset loaded!")
 
+    
         
-    def get_pcam_generators(self, base_dir, train_batch_size=32, val_batch_size=32):
+    def get_pcam_generators(self, base_dir, train_batch_size=32, val_batch_size=32, rand_aug=True):
 
         # dataset parameters
         train_path = os.path.join(base_dir, 'train+val', 'train')
@@ -115,11 +116,22 @@ class Dataset(object):
         RESCALING_FACTOR = 1./255
 
         # instantiate data generators
+        
+        MAX_DELTA = 2.0
+    
         def generator(image, label):
             return (image, label), (label, image)
-        
     
-
+        def random_brightness(x, y):
+            return tf.image.random_brightness(x, max_delta=MAX_DELTA), y
+        
+        def random_flip_hor(x, y):
+            return tf.image.random_flip_left_right(x), y # 50% of flipping
+        
+        def random_flip_vert(x,y):
+            return tf.image.random_flip_up_down(x), y # 50% of flipping
+   
+        
         train_gen = tf.keras.utils.image_dataset_from_directory(train_path,
                                                 image_size=(self.image_size, self.image_size),
                                                 batch_size=train_batch_size,
@@ -133,7 +145,10 @@ class Dataset(object):
         
         
         train_gen = train_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
-        
+        if rand_aug:
+            train_gen = train_gen.map(random_brightness)
+            train_gen = train_gen.map(random_flip_hor)
+            train_gen = train_gen.map(random_flip_vert)
         train_gen = train_gen.map(generator)
         
         
