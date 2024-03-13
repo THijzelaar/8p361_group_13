@@ -168,6 +168,6 @@ class Dataset(object):
             dataset_train, dataset_test = pre_process_smallnorb.generate_tf_data(self.X_train, self.y_train, self.X_test_patch, self.y_test, self.config['batch_size'])
         elif self.model_name == 'MULTIMNIST':
             dataset_train, dataset_test = pre_process_multimnist.generate_tf_data(self.X_train, self.y_train, self.X_test, self.y_test, self.config['batch_size'], self.config["shift_multimnist"])
-        elif self.model_name == '8P361':
+        else:
             dataset_train, dataset_test = self.get_pcam_generators(self.config['pcam_path'], self.config['batch_size'], self.config['batch_size'])
         return dataset_train, dataset_test
