@@ -17,7 +17,7 @@
 import numpy as np
 import tensorflow as tf
 from utils.layers import FCCaps, Length, Mask
-from utils.layers_hinton import DigitCaps, PrimaryCaps
+from utils.layers_em import DigitCaps, PrimaryCaps
 
 def efficient_capsnet_graph(input_shape):
     """
@@ -44,7 +44,7 @@ def efficient_capsnet_graph(input_shape):
     x = tf.keras.layers.BatchNormalization()(x)
     x = PrimaryCaps(C=16, L=8, k=20, s=1)(x)
     
-    digit_caps = DigitCaps(2, 16, routing=3)(x)
+    digit_caps = DigitCaps(16, 8, routing=3)(x)
     
     digit_caps_len = Length(name='length_capsnet_output')(digit_caps)
 

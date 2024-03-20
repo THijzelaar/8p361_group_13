@@ -19,7 +19,7 @@ from utils.layers import PrimaryCaps, FCCaps, Length
 from utils.tools import get_callbacks, marginLoss, multiAccuracy
 from utils.dataset import Dataset
 from utils import pre_process_multimnist
-from models import efficient_capsnet_graph_mnist, efficient_capsnet_graph_smallnorb, efficient_capsnet_graph_multimnist, original_capsnet_graph_mnist, efficient_capsnet_graph_dynamic_routing, efficient_capsnet_graph_self_attention
+from models import efficient_capsnet_graph_mnist, efficient_capsnet_graph_smallnorb, efficient_capsnet_graph_multimnist, original_capsnet_graph_mnist, efficient_capsnet_graph_dynamic_routing, efficient_capsnet_graph_self_attention, efficient_capsnet_graph_em
 import os
 import json
 from tqdm.notebook import tqdm
@@ -155,9 +155,11 @@ class EfficientCapsNet(Model):
         elif self.model_name == 'MULTIMNIST':
             self.model = efficient_capsnet_graph_multimnist.build_graph(self.config['MULTIMNIST_INPUT_SHAPE'], self.mode, self.verbose)
         elif self.model_name == 'self_attention':
-            self.model = efficient_capsnet_graph_8p361.build_graph(self.config['8P361_INPUT_SHAPE'], self.mode, self.verbose)
+            self.model = efficient_capsnet_graph_self_attention.build_graph(self.config['8P361_INPUT_SHAPE'], self.mode, self.verbose)
         elif self.model_name == 'dynamic_routing':
-            self.model = efficient_capsnet_graph_dynamic_routing.build_graph(self.config['8P361_INPUT_SHAPE'], self.mode, self.verbose)   
+            self.model = efficient_capsnet_graph_dynamic_routing.build_graph(self.config['8P361_INPUT_SHAPE'], self.mode, self.verbose)  
+        elif self.model_name =='em':
+            self.model = efficient_capsnet_graph_em.build_graph(self.config['8P361_INPUT_SHAPE'], self.mode, self.verbose)             
             
     def train(self, dataset=None, initial_epoch=0):
         callbacks = get_callbacks(self.tb_path, self.model_path_new_train, self.config['lr_dec'], self.config['lr'])
@@ -302,7 +304,7 @@ class CapsNet_8p361(Model):
 
     
     def load_graph(self):
-        self.model = original_capsnet_graph_8p361.build_graph(self.config['8P361_INPUT_SHAPE'], self.mode, self.n_routing, self.verbose)
+        self.model = original_capsnet_graph_mnist.build_graph(self.config['8P361_INPUT_SHAPE'], self.mode, self.n_routing, self.verbose)
         
     def train(self, dataset=None, initial_epoch=0):
         callbacks = get_callbacks(self.tb_path, self.model_path_new_train, self.config['lr_dec'], self.config['lr'])

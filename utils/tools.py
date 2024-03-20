@@ -19,7 +19,7 @@ import tensorflow as tf
 def learn_scheduler(lr_dec, lr):
     def learning_scheduler_fn(epoch):
         lr_new = lr * (lr_dec ** epoch)
-        return lr_new if lr_new >= 5e-5 else 5e-5
+        return lr_new if lr_new >= 5e-7 else 5e-7
     return learning_scheduler_fn
 
 
