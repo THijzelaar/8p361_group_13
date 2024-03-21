@@ -1,2 +1,1 @@
-from models.model import EfficientCapsNet, CapsNet
-
+from .convnet import *

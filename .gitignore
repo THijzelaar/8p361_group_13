@@ -1,3 +1,7 @@
-Data
-Data_jpeg
-logs
+__pycache__/
+*.py[cod]
+
+ckpt/**
+data/**
+logs/**
+
