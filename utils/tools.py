@@ -16,13 +16,15 @@
 import numpy as np
 import tensorflow as tf
 
+# Create a learning rate scheduler, 
+# that decreases the learning rate by a factor of lr_dec every epoch
 def learn_scheduler(lr_dec, lr):
     def learning_scheduler_fn(epoch):
         lr_new = lr * (lr_dec ** epoch)
         return lr_new if lr_new >= 5e-7 else 5e-7
     return learning_scheduler_fn
 
-
+# Create tensorflow checkpoints, tensorboard logs and learning rate scheduler
 def get_callbacks(tb_log_save_path, saved_model_path, lr_dec, lr):
     tb = tf.keras.callbacks.TensorBoard(log_dir=tb_log_save_path, histogram_freq=0)
 
@@ -36,9 +38,14 @@ def get_callbacks(tb_log_save_path, saved_model_path, lr_dec, lr):
 
     return [tb, model_checkpoint, lr_decay]
 
-
+# Create a custom loss function
+# The margin loss is designed to increase the margin between the true class and the other classes,
+# so that the model can learn to distinguish between different classes.
 def marginLoss(y_true, y_pred):
+    # This is the lambda parameter, which is set to 0.5 in this code. 
+    # It's a hyperparameter that controls the influence of the margin loss compared to the cross-entropy loss.
     lbd = 0.5
+    # upper and lower margin
     m_plus = 0.9
     m_minus = 0.1
     
@@ -47,6 +54,9 @@ def marginLoss(y_true, y_pred):
 
     return tf.reduce_mean(tf.reduce_sum(L, axis=1))
 
+# Create a custom accuracy function
+# This function calculates the accuracy of the model,
+# by comparing the predicted label with the true label.
 
 def multiAccuracy(y_true, y_pred):
     label_pred = tf.argsort(y_pred,axis=-1)[:,-2:]

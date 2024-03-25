@@ -135,8 +135,7 @@ class DigitCaps(tf.keras.layers.Layer):
         u = tf.einsum('...ji,jik->...jk', x, self.W)      #     u shape=(None,H*W*input_C,C*L)
         u = tf.reshape(u,(-1, H*W*input_C, self.C, self.L))#     u shape=(None,H*W*input_C,C,L)
         
-        if self.routing:
-            #Hinton's routing
+        if self.routing: #Hinton's routing
             b = tf.zeros(tf.shape(u)[:-1])[...,None]                       # b shape=(None,H*W*input_C,C,1) -> (None,i,j,1)
             for r in range(self.routing):
                 c = tf.nn.softmax(b,axis=2)                                # c shape=(None,H*W*input_C,C,1) -> (None,i,j,1)
