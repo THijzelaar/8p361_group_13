@@ -13,12 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+Adapted code for the course 8P361 year 2024 at the technical university of Eindhoven
+
+Group 13
+"""
+
 import numpy as np
 import tensorflow as tf
-#import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 import os
-from utils import pre_process_mnist, pre_process_multimnist, pre_process_smallnorb
 import json
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
@@ -56,7 +60,6 @@ class Dataset(object):
         self.class_names = None
         self.X_test_patch = None
         self.load_config()
-        self.get_dataset()
         self.image_size = image_size
         
 
@@ -66,48 +69,9 @@ class Dataset(object):
         """
         with open(self.config_path) as json_data_file:
             self.config = json.load(json_data_file)
-
-
-    def get_dataset(self):
-        if self.model_name == 'MNIST':
-            (self.X_train, self.y_train), (self.X_test, self.y_test) = tf.keras.datasets.mnist.load_data(path=self.config['mnist_path'])
-            # prepare the data
-            self.X_train, self.y_train = pre_process_mnist.pre_process(self.X_train, self.y_train)
-            self.X_test, self.y_test = pre_process_mnist.pre_process(self.X_test, self.y_test)
-            self.class_names = list(range(10))
-            print("[INFO] Dataset loaded!")
-        elif self.model_name == 'SMALLNORB':
-                    # import the datatset
-            (ds_train, ds_test), ds_info = tfds.load(
-                'smallnorb',
-                split=['train', 'test'],
-                shuffle_files=True,
-                as_supervised=False,
-                with_info=True)
-            self.X_train, self.y_train = pre_process_smallnorb.pre_process(ds_train)
-            self.X_test, self.y_test = pre_process_smallnorb.pre_process(ds_test)
-
-            self.X_train, self.y_train = pre_process_smallnorb.standardize(self.X_train, self.y_train)
-            self.X_train, self.y_train = pre_process_smallnorb.rescale(self.X_train, self.y_train, self.config)
-            self.X_test, self.y_test = pre_process_smallnorb.standardize(self.X_test, self.y_test)
-            self.X_test, self.y_test = pre_process_smallnorb.rescale(self.X_test, self.y_test, self.config) 
-            self.X_test_patch, self.y_test = pre_process_smallnorb.test_patches(self.X_test, self.y_test, self.config)
-            self.class_names = ds_info.features['label_category'].names
-            print("[INFO] Dataset loaded!")
-        elif self.model_name == 'MULTIMNIST':
-            (self.X_train, self.y_train), (self.X_test, self.y_test) = tf.keras.datasets.mnist.load_data(path=self.config['mnist_path'])
-            # prepare the data
-            self.X_train = pre_process_multimnist.pad_dataset(self.X_train, self.config["pad_multimnist"])
-            self.X_test = pre_process_multimnist.pad_dataset(self.X_test, self.config["pad_multimnist"])
-            self.X_train, self.y_train = pre_process_multimnist.pre_process(self.X_train, self.y_train)
-            self.X_test, self.y_test = pre_process_multimnist.pre_process(self.X_test, self.y_test)
-            self.class_names = list(range(10))
-            print("[INFO] Dataset loaded!")
-
-    
         
     def get_pcam_generators(self, base_dir, train_batch_size=32, val_batch_size=32, rand_aug=True):
-
+        # Data generator objects (Taken from course github 8P361)
         # dataset parameters
         train_path = os.path.join(base_dir, 'train+val', 'train')
         valid_path = os.path.join(base_dir, 'train+val', 'valid')
@@ -145,6 +109,8 @@ class Dataset(object):
         
         
         train_gen = train_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
+
+        # Random data augmentations
         if rand_aug:
             train_gen = train_gen.map(random_brightness)
             train_gen = train_gen.map(random_flip_hor)
@@ -162,12 +128,6 @@ class Dataset(object):
         return train_gen, val_gen
 
     def get_tf_data(self):
-        if self.model_name == 'MNIST':
-            dataset_train, dataset_test = pre_process_mnist.generate_tf_data(self.X_train, self.y_train, self.X_test, self.y_test, self.config['batch_size'])
-        elif self.model_name == 'SMALLNORB':
-            dataset_train, dataset_test = pre_process_smallnorb.generate_tf_data(self.X_train, self.y_train, self.X_test_patch, self.y_test, self.config['batch_size'])
-        elif self.model_name == 'MULTIMNIST':
-            dataset_train, dataset_test = pre_process_multimnist.generate_tf_data(self.X_train, self.y_train, self.X_test, self.y_test, self.config['batch_size'], self.config["shift_multimnist"])
-        else:
-            dataset_train, dataset_test = self.get_pcam_generators(self.config['pcam_path'], self.config['batch_size'], self.config['batch_size'])
+        # Load the datasets without the need of inputting any variables.
+        dataset_train, dataset_test = self.get_pcam_generators(self.config['pcam_path'], self.config['batch_size'], self.config['batch_size'])
         return dataset_train, dataset_test

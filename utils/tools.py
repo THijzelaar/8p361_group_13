@@ -13,6 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+Adapted code for the course 8P361 year 2024 at the technical university of Eindhoven
+
+Group 13
+"""
+
 import numpy as np
 import tensorflow as tf
 

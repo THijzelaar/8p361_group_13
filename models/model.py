@@ -13,12 +13,18 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+Adapted code for the course 8P361 year 2024 at the technical university of Eindhoven
+
+Group 13
+"""
+
 import numpy as np
 import tensorflow as tf
 from utils.layers import PrimaryCaps, FCCaps, Length
 from utils.tools import get_callbacks, marginLoss, multiAccuracy
 from utils.dataset import Dataset
-from models import efficient_capsnet_graph_dynamic_routing, efficient_capsnet_graph_self_attention, 
+from models import efficient_capsnet_graph_dynamic_routing, efficient_capsnet_graph_self_attention
 import os
 import json
 from tqdm.notebook import tqdm
@@ -74,6 +80,7 @@ class Model(object):
     def load_graph_weights(self):
         try:
             self.model.load_weights(self.model_path)
+            print("[INFO] Graph Weights loaded")
         except Exception as e:
             print("[ERRROR] Graph Weights not found")
             

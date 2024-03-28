@@ -13,6 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+Adapted code for the course 8P361 year 2024 at the technical university of Eindhoven
+
+Group 13
+"""
+
 import numpy as np
 import tensorflow as tf
 
@@ -61,16 +67,15 @@ class PrimaryCaps(tf.keras.layers.Layer):
         self.s = s
         
     def build(self, input_shape):    
-        self.kernel = self.add_weight(shape=(self.k, self.k, input_shape[-1], self.C*self.L), initializer='glorot_uniform', name='kernel')
-        self.biases = self.add_weight(shape=(self.C,self.L), initializer='zeros', name='biases')
+        self.DW_Conv2D = tf.keras.layers.Conv2D(128, self.k, self.s,
+                                             activation='linear', groups=128, padding='valid')
         self.built = True
     
     def call(self, inputs):
-        x = tf.nn.conv2d(inputs, self.kernel, self.s, 'VALID')
+        x = self.DW_Conv2D(inputs) 
         H,W = x.shape[1:3]
         x = tf.keras.layers.Reshape((H, W, self.C, self.L))(x)
-        x /= self.C
-        x += self.biases
+        
         x = squash(x)      
         return x
     

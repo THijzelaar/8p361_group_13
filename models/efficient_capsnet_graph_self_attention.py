@@ -13,7 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
-# 8p361 group project
+"""
+Adapted code for the course 8P361 year 2024 at the technical university of Eindhoven
+
+Group 13
+"""
 import numpy as np
 import tensorflow as tf
 from utils.layers import PrimaryCaps, FCCaps, Length, Mask

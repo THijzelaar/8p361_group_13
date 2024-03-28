@@ -2,7 +2,6 @@ import os
 from PIL import Image
 
 # Function to convert all .jpg files in a folder and its subfolders to .jpeg files
-
 def convert_jpg_to_jpeg(source_folder, destination_folder):
     # Walk through all the folders and files in the source folder
     for root, dirs, files in os.walk(source_folder):
