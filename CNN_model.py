@@ -25,6 +25,14 @@ from sklearn.metrics import roc_curve, auc
 # the size of the images in the PCAM dataset
 IMAGE_SIZE = 96
 
+import tensorflow as tf
+print(tf.test.is_built_with_cuda())
+print(tf.test.is_gpu_available(cuda_only=False, min_cuda_compute_capability=None))
+gpus = tf.config.experimental.list_physical_devices('GPU')
+print(gpus, tf.version)
+tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
+tf.config.experimental.set_memory_growth(gpus[0], True)
+
 
 def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32):
 
@@ -87,8 +95,8 @@ train_gen, val_gen = get_pcam_generators(r'C:\Users\20203080\Documents\GitHub\8p
 save_dir = './bin/'
 # save the model and weights
 model_name = save_dir + 'cnn_model'
-model_filepath = save_dir + model_name + '.json'
-weights_filepath = save_dir + model_name + '_weights.hdf5'
+model_filepath = model_name + '.json'
+weights_filepath = model_name + '_weights.hdf5'
 
 model_json = model.to_json() # serialize model to JSON
 with open(model_filepath, 'w') as json_file:
