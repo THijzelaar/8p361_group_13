@@ -2,7 +2,25 @@
 TU/e BME Project Imaging 2021
 Convolutional neural network for PCAM
 Author: Suzanne Wetstein
+
+Adapted by group 13 for the course 8P361
+This file trains the CNN model described in the report for each parameter variation
 '''
+# Change variables to point at the locations of the training data and where you want to save the models
+data_path = r'C:\Users\20203080\Documents\GitHub\8p361_group_13\Data_jpeg'
+save_dir = './bin/'
+# Define the different settings for the model
+# (epochs, learning rate, batch size)
+settings = [(10, 5e-5, 32), (10, 5e-5, 64), (10, 1e-4, 32), (20, 5e-5, 32)]
+name = ['base', 'bs_64', 'lr_1e-4', '20_epochs']
+
+IMAGE_SIZE = 96
+
+# size of both training sets
+size_train = 144000
+size_val = 16000
+
+
 
 # disable overly verbose tensorflow logging
 import os
@@ -18,12 +36,8 @@ from tensorflow.keras.layers import Conv2D, MaxPool2D
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 
-# unused for now, to be used for ROC analysis
-from sklearn.metrics import roc_curve, auc
-
-
 # the size of the images in the PCAM dataset
-IMAGE_SIZE = 96
+
 
 import tensorflow as tf
 print(tf.test.is_built_with_cuda())
@@ -47,8 +61,7 @@ def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32, rand_a
         
         MAX_DELTA = 2.0
     
-        def generator(image, label):
-            return (image, label), (label, image)
+        
     
         def random_brightness(x, y):
             return tf.image.random_brightness(x, max_delta=MAX_DELTA), y
@@ -79,11 +92,10 @@ def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32, rand_a
             train_gen = train_gen.map(random_brightness)
             train_gen = train_gen.map(random_flip_hor)
             train_gen = train_gen.map(random_flip_vert)
-        train_gen = train_gen.map(generator)
-        
+
         
         val_gen = val_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
-        val_gen = val_gen.map(generator)
+
 
         train_gen = train_gen.prefetch(-1)
         val_gen = val_gen.prefetch(-1)
@@ -93,11 +105,11 @@ def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32, rand_a
 
 
 
-def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64, third_filters=128, learning_rate = 5e-5):
+def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64, learning_rate = 5e-5):
 
      # build the model
      model = Sequential()
-
+     model.add(tf.keras.Input((IMAGE_SIZE, IMAGE_SIZE, 3)))
      model.add(Conv2D(first_filters, kernel_size, activation = 'relu', padding = 'same', input_shape = (IMAGE_SIZE, IMAGE_SIZE, 3)))
      model.add(MaxPool2D(pool_size = pool_size))
 
@@ -116,18 +128,16 @@ def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filte
      return model
 
 
-data_path = r'C:\Users\20203080\Documents\GitHub\8p361_group_13\Data'
-save_dir = './bin/'
-# save the model and weights
-model_name = save_dir + 'cnn_model_'
-model_filepath = model_name + '.json'
-weights_filepath = model_name + '_weights.hdf5'
+
+
 
 # train model for 10, 20 epochs. lr of 5e-5, 1e-4 and batchsize of 32 and 64
-settings = [(10, 5e-5, 32), (10, 5e-5, 64), (10, 1e-4, 32), (20, 5e-5, 32)]
-name = ['base', 'bs_64', 'lr_1e-4', '20_epochs']
-for i in range(4):
+
+for i in range(len(settings)):
      model_name = name[i]
+     
+     model_filepath = model_name + '.json'
+     weights_filepath = model_name + '_weights.hdf5'
      model_filepath = os.path.join(save_dir, model_name + '.json')
      weights_filepath = os.path.join(save_dir, model_name + '_weights.hdf5')
 
@@ -153,12 +163,13 @@ for i in range(4):
 
 
      # train the model
-     train_steps = 144000//train_gen.batch_size
-     val_steps = 16000//val_gen.batch_size
+     train_steps = size_train//settings[i][2]
+     val_steps = size_val//settings[i][2]
 
      history = model.fit(train_gen, steps_per_epoch=train_steps,
                          validation_data=val_gen,
                          validation_steps=val_steps,
                          epochs=settings[i][0],
-                         callbacks=callbacks_list)
+                         callbacks=callbacks_list,
+                         batch_size=settings[i][2])
      print('Training done for ', model_name)
