@@ -1,12 +1,12 @@
 {
     "eps": 10e-21,
     "8P361_INPUT_SHAPE": [96,96,3],
-    "lr": 5e-5,
+    "lr": 10e-5,
     "lmd_gen": 0.392,
     "lr_dec": 0.97,
     "batch_size": 32,
     "epochs":10,
     "saved_model_dir": "bin",
-    "tb_log_save_dir": "logs",
+    "tb_log_save_dir": "logs_lr_10e-5",
     "pcam_path": "./Data_jpeg/"
 }

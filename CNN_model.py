@@ -34,32 +34,66 @@ tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
 
 
-def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32):
-
-     # dataset parameters
-     train_path = os.path.join(base_dir, 'train+val', 'train')
-     valid_path = os.path.join(base_dir, 'train+val', 'valid')
-
-
-     RESCALING_FACTOR = 1./255
-
-     # instantiate data generators
-     datagen = ImageDataGenerator(rescale=RESCALING_FACTOR)
-
-     train_gen = datagen.flow_from_directory(train_path,
-                                             target_size=(IMAGE_SIZE, IMAGE_SIZE),
-                                             batch_size=train_batch_size,
-                                             class_mode='binary')
-
-     val_gen = datagen.flow_from_directory(valid_path,
-                                             target_size=(IMAGE_SIZE, IMAGE_SIZE),
-                                             batch_size=val_batch_size,
-                                             class_mode='binary')
-
-     return train_gen, val_gen
+def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32, rand_aug=True):
+        # Data generator objects (Taken from course github 8P361)
+        # dataset parameters
+        train_path = os.path.join(base_dir, 'train+val', 'train')
+        valid_path = os.path.join(base_dir, 'train+val', 'valid')
 
 
-def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64, third_filters=128):
+        RESCALING_FACTOR = 1./255
+
+        # instantiate data generators
+        
+        MAX_DELTA = 2.0
+    
+        def generator(image, label):
+            return (image, label), (label, image)
+    
+        def random_brightness(x, y):
+            return tf.image.random_brightness(x, max_delta=MAX_DELTA), y
+        
+        def random_flip_hor(x, y):
+            return tf.image.random_flip_left_right(x), y # 50% of flipping
+        
+        def random_flip_vert(x,y):
+            return tf.image.random_flip_up_down(x), y # 50% of flipping
+   
+        
+        train_gen = tf.keras.utils.image_dataset_from_directory(train_path,
+                                                image_size=(IMAGE_SIZE, IMAGE_SIZE),
+                                                batch_size=train_batch_size,
+                                                label_mode='binary')
+
+        val_gen = tf.keras.utils.image_dataset_from_directory(valid_path,
+                                                image_size=(IMAGE_SIZE, IMAGE_SIZE),
+                                                batch_size=val_batch_size,
+                                                label_mode='binary')
+        
+        
+        
+        train_gen = train_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
+
+        # Random data augmentations
+        if rand_aug:
+            train_gen = train_gen.map(random_brightness)
+            train_gen = train_gen.map(random_flip_hor)
+            train_gen = train_gen.map(random_flip_vert)
+        train_gen = train_gen.map(generator)
+        
+        
+        val_gen = val_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
+        val_gen = val_gen.map(generator)
+
+        train_gen = train_gen.prefetch(-1)
+        val_gen = val_gen.prefetch(-1)
+        
+
+        return train_gen, val_gen
+
+
+
+def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64, third_filters=128, learning_rate = 5e-5):
 
      # build the model
      model = Sequential()
@@ -77,45 +111,54 @@ def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filte
 
 
      # compile the model
-     model.compile(SGD(learning_rate=5e-5, momentum=0.95), loss = 'binary_crossentropy', metrics=['accuracy'])
+     model.compile(SGD(learning_rate=learning_rate, momentum=0.95), loss = 'binary_crossentropy', metrics=['accuracy'])
 
      return model
 
 
-# get the model
-model = get_model()
-model.summary()
-
-
-
-# get the data generators
-train_gen, val_gen = get_pcam_generators(r'C:\Users\20203080\Documents\GitHub\8p361_group_13\Data')
-
-
+data_path = r'C:\Users\20203080\Documents\GitHub\8p361_group_13\Data'
 save_dir = './bin/'
 # save the model and weights
-model_name = save_dir + 'cnn_model'
+model_name = save_dir + 'cnn_model_'
 model_filepath = model_name + '.json'
 weights_filepath = model_name + '_weights.hdf5'
 
-model_json = model.to_json() # serialize model to JSON
-with open(model_filepath, 'w') as json_file:
-    json_file.write(model_json)
+# train model for 10, 20 epochs. lr of 5e-5, 1e-4 and batchsize of 32 and 64
+settings = [(10, 5e-5, 32), (10, 5e-5, 64), (10, 1e-4, 32), (20, 5e-5, 32)]
+name = ['base', 'bs_64', 'lr_1e-4', '20_epochs']
+for i in range(4):
+     model_name = name[i]
+     model_filepath = os.path.join(save_dir, model_name + '.json')
+     weights_filepath = os.path.join(save_dir, model_name + '_weights.hdf5')
+
+     # get the model
+     model = get_model(learning_rate=settings[i][1])
+     print('Model name: ', model_name)
 
 
-# define the model checkpoint and Tensorboard callbacks
-checkpoint = ModelCheckpoint(weights_filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
-tensorboard = TensorBoard(os.path.join('logs', model_name))
-callbacks_list = [checkpoint, tensorboard]
+
+     # get the data generators
+     train_gen, val_gen = get_pcam_generators(data_path, train_batch_size=settings[i][2], val_batch_size=settings[i][2])
 
 
-# train the model
-train_steps = train_gen.n//train_gen.batch_size
-val_steps = val_gen.n//val_gen.batch_size
+     model_json = model.to_json() # serialize model to JSON
+     with open(model_filepath, 'w') as json_file:
+          json_file.write(model_json)
 
-history = model.fit(train_gen, steps_per_epoch=train_steps,
-                    validation_data=val_gen,
-                    validation_steps=val_steps,
-                    epochs=25,
-                    callbacks=callbacks_list)
 
+     # define the model checkpoint and Tensorboard callbacks
+     checkpoint = ModelCheckpoint(weights_filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+     tensorboard = TensorBoard(os.path.join('logs', model_name))
+     callbacks_list = [checkpoint, tensorboard]
+
+
+     # train the model
+     train_steps = 144000//train_gen.batch_size
+     val_steps = 16000//val_gen.batch_size
+
+     history = model.fit(train_gen, steps_per_epoch=train_steps,
+                         validation_data=val_gen,
+                         validation_steps=val_steps,
+                         epochs=settings[i][0],
+                         callbacks=callbacks_list)
+     print('Training done for ', model_name)
