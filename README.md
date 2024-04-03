@@ -7,5 +7,6 @@ The CNN model was implemented in its entirety in the CNN_model.py file. All para
 To allow for the capsule networks to take in the images, they needed to converted to jpeg format. A file for this task is provided as well.
 
 
-The original code was adapted from the paper "Efficient-CapsNet: Capsule Network with Self-Attention Routing", which has been linked below. The corresponding github can be found [here](https://github.com/EscVM/Efficient-CapsNet)
+The original code was adapted from the paper "Efficient-CapsNet: Capsule Network with Self-Attention Routing", which has been linked below. The corresponding github can be found [here](https://github.com/EscVM/Efficient-CapsNet).
+
 [![arXiv](http://img.shields.io/badge/arXiv-2001.09136-B31B1B.svg)](https://arxiv.org/abs/2101.12491)
