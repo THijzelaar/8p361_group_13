@@ -17,16 +17,28 @@ import glob
 import pandas as pd
 from matplotlib.pyplot import imread
 from models import EfficientCapsNet
-
+from tensorflow.keras.models import model_from_json
 #Change these variables to point at the locations and names of the test dataset and your models.
 TEST_PATH = r"./Data/test/"
+MODEL_FILEPATH = './bin/base.json' # only for CNN
+MODEL_WEIGHTS_FILEPATH = "./bin/base_weights.hdf5"
 
-MODEL_WEIGHTS_FILEPATH = r"./bin/efficient_capsnetself_attention_base.h5"
+model_name = "CNN" # chose self_attention or dynamic_routing or CNN
 
-model_name = "self_attention" # chose self_attention or dynamic_routing
-model_test = EfficientCapsNet(model_name, mode='test', verbose=True)
-model_test.model.load_weights(MODEL_WEIGHTS_FILEPATH)
-model = model_test.model
+if model_name == 'CNN':
+            
+    
+
+    # load model and model weights
+    json_file = open(MODEL_FILEPATH, 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    model = model_from_json(loaded_model_json)
+    model.load_weights(MODEL_WEIGHTS_FILEPATH)
+else:
+    model_test = EfficientCapsNet(model_name, mode='test', verbose=True)
+    model_test.model.load_weights(MODEL_WEIGHTS_FILEPATH)
+    model = model_test.model
 
 
 
@@ -58,9 +70,11 @@ for idx in range(0, max_idx, file_batch):
                 # apply the same preprocessing as during draining
                 K_test = K_test.astype('float')/255.0
                 
-                predictions = model.predict(K_test)[0]
-                
-                test_df['label'] = predictions[:,1]
+                predictions = model.predict(K_test)
+                if model_name == 'CNN':
+                    test_df['label'] = predictions
+                else:
+                    test_df['label'] = predictions[0][:,1]
                 submission = pd.concat([submission, test_df[['id', 'label']]])
 # save your submission
 submission.head()

@@ -131,3 +131,59 @@ class Dataset(object):
         # Load the datasets without the need of inputting any variables.
         dataset_train, dataset_test = self.get_pcam_generators(self.config['pcam_path'], self.config['batch_size'], self.config['batch_size'])
         return dataset_train, dataset_test
+
+
+def get_CNN_generators(base_dir, image_size, train_batch_size=32, val_batch_size=32, rand_aug=True):
+        # Data generator objects (Taken from course github 8P361)
+        # dataset parameters
+        train_path = os.path.join(base_dir, 'train+val', 'train')
+        valid_path = os.path.join(base_dir, 'train+val', 'valid')
+
+
+        RESCALING_FACTOR = 1./255
+
+        # instantiate data generators
+        
+        MAX_DELTA = 2.0
+    
+        
+    
+        def random_brightness(x, y):
+            return tf.image.random_brightness(x, max_delta=MAX_DELTA), y
+        
+        def random_flip_hor(x, y):
+            return tf.image.random_flip_left_right(x), y # 50% of flipping
+        
+        def random_flip_vert(x,y):
+            return tf.image.random_flip_up_down(x), y # 50% of flipping
+   
+        
+        train_gen = tf.keras.utils.image_dataset_from_directory(train_path,
+                                                image_size=(image_size, image_size),
+                                                batch_size=train_batch_size,
+                                                label_mode='binary')
+
+        val_gen = tf.keras.utils.image_dataset_from_directory(valid_path,
+                                                image_size=(image_size, image_size),
+                                                batch_size=val_batch_size,
+                                                label_mode='binary')
+        
+        
+        
+        train_gen = train_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
+
+        # Random data augmentations
+        if rand_aug:
+            train_gen = train_gen.map(random_brightness)
+            train_gen = train_gen.map(random_flip_hor)
+            train_gen = train_gen.map(random_flip_vert)
+
+        
+        val_gen = val_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
+
+
+        train_gen = train_gen.prefetch(-1)
+        val_gen = val_gen.prefetch(-1)
+        
+
+        return train_gen, val_gen

@@ -6,19 +6,7 @@ Author: Suzanne Wetstein
 Adapted by group 13 for the course 8P361
 This file trains the CNN model described in the report for each parameter variation
 '''
-# Change variables to point at the locations of the training data and where you want to save the models
-data_path = r'C:\Users\20203080\Documents\GitHub\8p361_group_13\Data_jpeg'
-save_dir = './bin/'
-# Define the different settings for the model
-# (epochs, learning rate, batch size)
-settings = [(10, 5e-5, 32), (10, 5e-5, 64), (10, 1e-4, 32), (20, 5e-5, 32)]
-name = ['base', 'bs_64', 'lr_1e-4', '20_epochs']
 
-IMAGE_SIZE = 96
-
-# size of both training sets
-size_train = 144000
-size_val = 16000
 
 
 
@@ -48,60 +36,6 @@ tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
 
 
-def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32, rand_aug=True):
-        # Data generator objects (Taken from course github 8P361)
-        # dataset parameters
-        train_path = os.path.join(base_dir, 'train+val', 'train')
-        valid_path = os.path.join(base_dir, 'train+val', 'valid')
-
-
-        RESCALING_FACTOR = 1./255
-
-        # instantiate data generators
-        
-        MAX_DELTA = 2.0
-    
-        
-    
-        def random_brightness(x, y):
-            return tf.image.random_brightness(x, max_delta=MAX_DELTA), y
-        
-        def random_flip_hor(x, y):
-            return tf.image.random_flip_left_right(x), y # 50% of flipping
-        
-        def random_flip_vert(x,y):
-            return tf.image.random_flip_up_down(x), y # 50% of flipping
-   
-        
-        train_gen = tf.keras.utils.image_dataset_from_directory(train_path,
-                                                image_size=(IMAGE_SIZE, IMAGE_SIZE),
-                                                batch_size=train_batch_size,
-                                                label_mode='binary')
-
-        val_gen = tf.keras.utils.image_dataset_from_directory(valid_path,
-                                                image_size=(IMAGE_SIZE, IMAGE_SIZE),
-                                                batch_size=val_batch_size,
-                                                label_mode='binary')
-        
-        
-        
-        train_gen = train_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
-
-        # Random data augmentations
-        if rand_aug:
-            train_gen = train_gen.map(random_brightness)
-            train_gen = train_gen.map(random_flip_hor)
-            train_gen = train_gen.map(random_flip_vert)
-
-        
-        val_gen = val_gen.map(lambda x, y: (x * RESCALING_FACTOR, y))
-
-
-        train_gen = train_gen.prefetch(-1)
-        val_gen = val_gen.prefetch(-1)
-        
-
-        return train_gen, val_gen
 
 
 

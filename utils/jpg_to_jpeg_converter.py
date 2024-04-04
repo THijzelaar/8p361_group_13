@@ -21,9 +21,3 @@ def convert_jpg_to_jpeg(source_folder, destination_folder):
                 # Open and convert the image
                 with Image.open(source_file) as img:
                     img.convert('RGB').save(dest_file, 'JPEG')
-
-# Example usage:
-source_folder = './Data'
-destination_folder = './Data_jpeg'
-
-convert_jpg_to_jpeg(source_folder, destination_folder)
